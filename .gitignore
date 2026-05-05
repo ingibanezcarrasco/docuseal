@@ -1,0 +1,19 @@
+# Datos persistentes locales (no subir al repo)
+data/
+*.sqlite3
+*.db
+
+# Archivos de entorno con secretos reales
+.env
+
+# Logs y temporales
+*.log
+tmp/
+
+# Docker override files locales
+docker-compose.override.yml
+
+# IDEs
+.idea/
+.vscode/
+.DS_Store

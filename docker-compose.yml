@@ -1,0 +1,73 @@
+# ------------------------------------------------------------------------------
+# DocuSeal - Docker Compose con PostgreSQL
+# ------------------------------------------------------------------------------
+# Basado en la configuración oficial de DocuSeal.
+# DocuSeal Docker requiere PostgreSQL (SQLite no está soportado en la imagen oficial).
+# ------------------------------------------------------------------------------
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: docuseal-postgres
+    restart: unless-stopped
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: docuseal
+      POSTGRES_PASSWORD: docuseal
+      POSTGRES_DB: docuseal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U docuseal -d docuseal"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  docuseal:
+    image: docuseal/docuseal:2.5.2
+    container_name: docuseal-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    volumes:
+      - ./data/docuseal:/data/docuseal
+    environment:
+      - DATABASE_URL=postgresql://docuseal:docuseal@postgres:5432/docuseal
+      - SECRET_KEY_BASE=${SECRET_KEY_BASE}
+      - HOST=${HOST_URL:-localhost:3000}
+      - FORCE_SSL=${FORCE_SSL:-}
+      - SMTP_ADDRESS=${SMTP_ADDRESS:-}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_DOMAIN=${SMTP_DOMAIN:-}
+      - SMTP_USERNAME=${SMTP_USERNAME:-}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - SMTP_AUTHENTICATION=${SMTP_AUTHENTICATION:-plain}
+      - SMTP_ENABLE_STARTTLS_AUTO=${SMTP_ENABLE_STARTTLS_AUTO:-true}
+      - SMTP_FROM=${SMTP_FROM:-}
+      - AWS_REGION=${AWS_REGION:-}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
+      - AWS_S3_BUCKET=${AWS_S3_BUCKET:-}
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Descomenta para exponer con HTTPS mediante Caddy + Tailscale Funnel
+  # caddy:
+  #   image: caddy:2-alpine
+  #   container_name: docuseal-caddy
+  #   restart: unless-stopped
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./Caddyfile:/etc/caddy/Caddyfile:ro
+  #     - ./data/caddy:/data
+  #     - ./data/caddy_config:/config
+  #   environment:
+  #     - HOST=${HOST_URL:-localhost}

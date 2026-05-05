@@ -1,0 +1,12 @@
+# ------------------------------------------------------------------------------
+# Caddyfile para DocuSeal (modo producción)
+# ------------------------------------------------------------------------------
+# Asegúrate de:
+#   1. Que el dominio apunte a la IP del servidor.
+#   2. Que los puertos 80 y 443 estén abiertos.
+# Caddy se encargará automáticamente de obtener y renovar el certificado SSL.
+# ------------------------------------------------------------------------------
+
+{$HOST} {
+    reverse_proxy docuseal:3000
+}
